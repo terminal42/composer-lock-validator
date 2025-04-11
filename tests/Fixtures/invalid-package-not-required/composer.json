@@ -1,0 +1,56 @@
+{
+    "require": {
+        "php": "^8.1",
+        "vendor/package-a": "^1.0"
+    },
+    "require-dev": {
+        "vendor/package-b": "^1.0"
+    },
+    "repositories": [
+        {
+            "packagist.org": false
+        },
+        {
+            "type": "package",
+            "package": {
+                "name": "vendor/package-a",
+                "version": "1.0.0",
+                "dist": {
+                    "type": "zip",
+                    "url": "https://domain.com/vendor/package-a/1.0.0.zip"
+                },
+                "require": {
+                    "vendor/package-b": "^1.0"
+                }
+            }
+        },
+        {
+            "type": "package",
+            "package": {
+                "name": "vendor/package-b",
+                "version": "1.0.0",
+                "dist": {
+                    "type": "zip",
+                    "url": "https://domain.com/vendor/package-b/1.0.0.zip"
+                },
+                "require": {
+                    "vendor/package-c": "^1.0"
+                }
+            }
+        },
+        {
+            "type": "package",
+            "package": {
+                "name": "vendor/package-c",
+                "version": "1.0.0",
+                "dist": {
+                    "type": "zip",
+                    "url": "https://domain.com/vendor/package-c/1.0.0.zip"
+                },
+                "require": {
+                    "vendor/package-b": "^1.0"
+                }
+            }
+        }
+    ]
+}
