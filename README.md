@@ -2,7 +2,8 @@
 
 This library allows to compare an external `composer.lock` file against your local Composer instance.
 So you can be sure the provided `composer.lock` does not contain any foreign packages (not required by your Composer 
-instance - aka `composer.json`) or package URLs that have been tampered with.
+instance - aka `composer.json`) or package URLs that have been tampered with. It also detects removed packages that 
+should be present.
 
 Usage:
 

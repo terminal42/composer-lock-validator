@@ -39,6 +39,8 @@ class ValidatorTest extends TestCase
         yield ['invalid-wrong-composer-lock-schema', 'The "composer.lock" schema is invalid: "composer.lock" does not match the expected JSON schema.'];
         yield ['invalid-package-not-required', 'The package "vendor/package-d" in version "1.0.0.0" is not required by any package in the composer.json or its transitive dependencies.'];
         yield ['invalid-package-manipulated-meta-data', 'The metadata of package "vendor/package-c" in version "1.0.0.0" does not match any of the metadata in the repositories.'];
+        yield ['invalid-removed-package', 'At least one package required "vendor/package-c" in "[>= 1.0.0.0-dev < 2.0.0.0-dev]" but it is missing in the composer.lock.'];
+        yield ['invalid-removed-package-and-modified-composer-lock-requirements', 'The metadata of package "vendor/package-b" in version "1.0.0.0" does not match any of the metadata in the repositories.'];
     }
 
     private function loadValidator(string $fixture): Validator

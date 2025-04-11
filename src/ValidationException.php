@@ -35,4 +35,13 @@ class ValidationException extends \LogicException
             $packageVersion,
         ));
     }
+
+    public static function becauseOfRemovedPackage(string $packageName, string $prettyConstraint): self
+    {
+        return new self(\sprintf(
+            'At least one package required "%s" in "%s" but it is missing in the composer.lock.',
+            $packageName,
+            $prettyConstraint,
+        ));
+    }
 }
