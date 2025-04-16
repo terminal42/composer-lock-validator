@@ -48,13 +48,23 @@ final class Validator
         }
     }
 
+    public static function createFromComposerJson(string $pathToComposerJson, IOInterface|null $io = null): self
+    {
+        return new self(Factory::create($io ?? new NullIO(), $pathToComposerJson));
+    }
+
+    public static function createFromComposer(Composer $composer): self
+    {
+        return new self($composer);
+    }
+
     /**
      * @param array<mixed> $composerLock
      *
      * @throws ValidationException
      * @throws \Throwable
      */
-    public function doValidate(array $composerLock): void
+    private function doValidate(array $composerLock): void
     {
         // 1st step, validate basic composer.lock requirements
         if (
@@ -122,16 +132,6 @@ final class Validator
         foreach ($composerLockRepo->getPackages() as $package) {
             $this->validatePackageMetadata($package, $pool);
         }
-    }
-
-    public static function createFromComposerJson(string $pathToComposerJson, IOInterface|null $io = null): self
-    {
-        return new self(Factory::create($io ?? new NullIO(), $pathToComposerJson));
-    }
-
-    public static function createFromComposer(Composer $composer): self
-    {
-        return new self($composer);
     }
 
     private function validatePackageMetadata(PackageInterface $package, Pool $pool): void
