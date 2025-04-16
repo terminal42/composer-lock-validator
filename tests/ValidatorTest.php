@@ -32,6 +32,7 @@ class ValidatorTest extends TestCase
     public static function passesValidationProvider(): \Generator
     {
         yield ['valid-simple'];
+        yield ['valid-root-package-replaces'];
     }
 
     public static function failsValidationProvider(): \Generator
