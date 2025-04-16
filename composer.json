@@ -1,16 +1,16 @@
 {
-    "name": "terminal42/composer-external-lock-validator",
-    "description": "A library to validate an external composer.lock file against your local Composer instance",
+    "name": "terminal42/composer-lock-validator",
+    "description": "A library to validate a composer.lock file against your local Composer instance",
     "type": "library",
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "Terminal42\\ComposerExternalLockValidator\\": "src/"
+            "Terminal42\\ComposerLockValidator\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Terminal42\\ComposerExternalLockValidator\\Tests\\": "tests/"
+            "Terminal42\\ComposerLockValidator\\Tests\\": "tests/"
         }
     },
     "authors": [

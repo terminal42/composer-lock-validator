@@ -1,17 +1,18 @@
-## Composer external lock file validator
+## Composer lock file validator
 
-This library allows to compare an external `composer.lock` file against your local Composer instance.
-So you can be sure the provided `composer.lock` does not contain any foreign packages (not required by your Composer 
+This library allows to compare a given `composer.lock` file against your local Composer instance.
+ 
+You can use it to e.g. ensure a provided `composer.lock` does not contain any foreign packages (not required by your Composer 
 instance - aka `composer.json`) or package URLs that have been tampered with. It also detects removed packages that 
 should be present.
 
 Usage:
 
 ```php
-use \Terminal42\ComposerExternalLockValidator\Validator;
-use \Terminal42\ComposerExternalLockValidator\ValidationException;
+use \Terminal42\ComposerLockValidator\Validator;
+use \Terminal42\ComposerLockValidator\ValidationException;
 
-$externalComposerLock = [
+$composerLock = [
     'content-hash' => '...',
     'packages' => [...]
     'packages-dev' => [...]
@@ -23,7 +24,7 @@ $validator = Validator::createFromComposer($composer);
 $validator = Validator::createFromComposerJson($pathToComposerJson);
 
 try {
-    $validator->validate($externalComposerLock);
+    $validator->validate($composerLock);
 } catch (ValidationException $exception) {
     echo 'Invalid: ' . $exception->getMessage();
 }

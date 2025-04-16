@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Terminal42\ComposerExternalLockValidator;
+namespace Terminal42\ComposerLockValidator;
 
 class ValidationException extends \LogicException
 {

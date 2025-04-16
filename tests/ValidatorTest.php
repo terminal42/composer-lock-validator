@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Terminal42\ComposerExternalLockValidator\Tests;
+namespace Terminal42\ComposerLockValidator\Tests;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Terminal42\ComposerExternalLockValidator\ValidationException;
-use Terminal42\ComposerExternalLockValidator\Validator;
+use Terminal42\ComposerLockValidator\ValidationException;
+use Terminal42\ComposerLockValidator\Validator;
 
 class ValidatorTest extends TestCase
 {
