@@ -10,8 +10,6 @@ use Composer\DependencyResolver\Request;
 use Composer\Factory;
 use Composer\IO\IOInterface;
 use Composer\IO\NullIO;
-use Composer\Json\JsonFile;
-use Composer\Json\JsonValidationException;
 use Composer\Package\BasePackage;
 use Composer\Package\Dumper\ArrayDumper;
 use Composer\Package\Loader\ArrayLoader;
@@ -37,20 +35,35 @@ final class Validator
     /**
      * @throws ValidationException
      */
-    public function validate(\stdClass $composerLock): void
+    public function validate(array $composerLock): void
     {
-        // 1st step, validate the composer.lock
         try {
-            JsonFile::validateJsonSchema('composer.lock', $composerLock, JsonFile::LOCK_SCHEMA);
-        } catch (JsonValidationException $e) {
-            throw ValidationException::becauseComposerLockSchemaInvalid($e->getMessage(), $e->getErrors());
+            $this->doValidate($composerLock);
+        } catch (ValidationException $exception) {
+            throw $exception;
+        } catch (\Throwable $exception) {
+            ValidationException::becauseOfOtherException($exception);
+        }
+    }
+
+    /**
+     * @throws ValidationException
+     * @throws \Throwable
+     */
+    public function doValidate(array $composerLock): void
+    {
+        // 1st step, validate basic composer.lock requirements
+        if (
+            !isset($composerLock['packages'], $composerLock['packages-dev'])
+            || !\is_array($composerLock['packages']) || !\is_array($composerLock['packages-dev'])
+        ) {
+            throw ValidationException::becausePackagesKeyMissingOrIncorrectInComposerLock();
         }
 
         /** @var RootPackageInterface&BasePackage $rootPackage */
         $rootPackage = clone $this->composer->getPackage();
         $composerLockRepo = new LockArrayRepository();
         $loader = new ArrayLoader();
-        $composerLock = json_decode(json_encode($composerLock), true);
         $packagesToLoad = [];
 
         foreach (array_merge($composerLock['packages'], $composerLock['packages-dev']) as $packageData) {

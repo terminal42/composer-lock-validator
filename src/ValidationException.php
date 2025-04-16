@@ -15,16 +15,9 @@ class ValidationException extends \LogicException
         ));
     }
 
-    /**
-     * @param array<string> $errors
-     */
-    public static function becauseComposerLockSchemaInvalid(string $errorMessage, array $errors): self
+    public static function becausePackagesKeyMissingOrIncorrectInComposerLock(): self
     {
-        return new self(\sprintf(
-            'The "composer.lock" schema is invalid: %s. (%s)',
-            $errorMessage,
-            implode(', ', $errors),
-        ));
+        return new self('The "composer.lock" must contain both, the "packages" and the "packages-dev" keys and they must be arrays.');
     }
 
     public static function becauseOfInvalidMetadataForPackage(string $packageName, string $packageVersion): self
@@ -43,5 +36,13 @@ class ValidationException extends \LogicException
             $packageName,
             $prettyConstraint,
         ));
+    }
+
+    public static function becauseOfOtherException(\Throwable $exception): self
+    {
+        return new self(\sprintf(
+            'An unknown other exception has been thrown: %s',
+            $exception->getMessage(),
+        ), 0, $exception);
     }
 }
