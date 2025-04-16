@@ -97,18 +97,13 @@ final class Validator
                     continue;
                 }
 
+                $target = $require->getTarget();
+                $constraint = $require->getConstraint();
+
                 // Widen the requirement if one package required this package already
-                if (isset($allRequirements[$require->getTarget()])) {
-                    $allRequirements[$require->getTarget()] = new MultiConstraint(
-                        [
-                            $allRequirements[$require->getTarget()],
-                            $require->getConstraint(),
-                        ],
-                        false,
-                    );
-                } else {
-                    $allRequirements[$require->getTarget()] = $require->getConstraint();
-                }
+                $allRequirements[$target] = isset($allRequirements[$target])
+                    ? new MultiConstraint([$allRequirements[$target], $constraint], false)
+                    : $constraint;
             }
         }
 
