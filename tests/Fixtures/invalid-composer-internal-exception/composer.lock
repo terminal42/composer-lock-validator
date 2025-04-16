@@ -1,0 +1,17 @@
+{
+    "content-hash": "foobar",
+    "packages": [
+        {
+            "name": "vendor/package-a",
+            "version": "this-is-some-fake-version",
+            "dist": {
+                "type": "zip",
+                "url": "https://domain.com/vendor/package-a/1.0.0.zip"
+            },
+            "require": {
+                "vendor/package-b": "^1.0"
+            }
+        }
+    ],
+    "packages-dev": []
+}

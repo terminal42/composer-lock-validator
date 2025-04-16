@@ -33,6 +33,8 @@ final class Validator
     }
 
     /**
+     * @param array<mixed> $composerLock
+     *
      * @throws ValidationException
      */
     public function validate(array $composerLock): void
@@ -42,11 +44,13 @@ final class Validator
         } catch (ValidationException $exception) {
             throw $exception;
         } catch (\Throwable $exception) {
-            ValidationException::becauseOfOtherException($exception);
+            throw ValidationException::becauseOfOtherException($exception);
         }
     }
 
     /**
+     * @param array<mixed> $composerLock
+     *
      * @throws ValidationException
      * @throws \Throwable
      */

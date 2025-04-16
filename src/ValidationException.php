@@ -41,7 +41,7 @@ class ValidationException extends \LogicException
     public static function becauseOfOtherException(\Throwable $exception): self
     {
         return new self(\sprintf(
-            'An unknown other exception has been thrown: %s',
+            'An unknown other exception has been thrown: %s.',
             $exception->getMessage(),
         ), 0, $exception);
     }
