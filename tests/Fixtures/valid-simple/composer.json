@@ -20,6 +20,7 @@
                     "url": "https://domain.com/vendor/package-a/1.0.0.zip"
                 },
                 "require": {
+                    "php": "^8.1",
                     "vendor/package-b": "^1.0"
                 }
             }
