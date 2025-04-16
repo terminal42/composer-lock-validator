@@ -53,13 +53,7 @@ final class Validator
         $composerLock = json_decode(json_encode($composerLock), true);
         $packagesToLoad = [];
 
-        foreach ($composerLock['packages'] as $packageData) {
-            $package = $loader->load($packageData);
-            $composerLockRepo->addPackage($package);
-            $packagesToLoad[$package->getName()] = new Constraint('=', $package->getVersion());
-        }
-
-        foreach ($composerLock['packages-dev'] as $packageData) {
+        foreach (array_merge($composerLock['packages'], $composerLock['packages-dev']) as $packageData) {
             $package = $loader->load($packageData);
             $composerLockRepo->addPackage($package);
             $packagesToLoad[$package->getName()] = new Constraint('=', $package->getVersion());
@@ -111,8 +105,6 @@ final class Validator
                 throw ValidationException::becauseOfRemovedPackage($packageName, $constraint->getPrettyString());
             }
         }
-
-        $pool = $this->createPool($rootPackage, $composerLockRepo, $packagesToLoad);
 
         // 4th step: validate if all the provided packages in the composer.lock actually exist in the repositories
         foreach ($composerLockRepo->getPackages() as $package) {
