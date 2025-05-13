@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Terminal42\ComposerLockValidator\Tests;
 
+use Composer\Util\Platform;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Terminal42\ComposerLockValidator\ValidationException;
@@ -11,6 +12,25 @@ use Terminal42\ComposerLockValidator\Validator;
 
 class ValidatorTest extends TestCase
 {
+    private string $originalCwd;
+
+    private bool|string $originalComposerEnv;
+
+    protected function setUp(): void
+    {
+        $this->originalCwd = getcwd();
+        $this->originalComposerEnv = Platform::getEnv('COMPOSER');
+    }
+
+    protected function tearDown(): void
+    {
+        chdir($this->originalCwd);
+
+        if ($this->originalComposerEnv) {
+            Platform::putEnv('COMPOSER', $this->originalComposerEnv);
+        }
+    }
+
     #[DataProvider('passesValidationProvider')]
     public function testPassesValidation(string $fixture): void
     {
@@ -47,6 +67,9 @@ class ValidatorTest extends TestCase
 
     private function loadValidator(string $fixture): Validator
     {
+        chdir($this->getFixtureDir($fixture));
+        Platform::putEnv('COMPOSER', $this->getFilePathFromFixtureDir($fixture, 'composer.json'));
+
         return Validator::createFromComposerJson($this->getFilePathFromFixtureDir($fixture, 'composer.json'));
     }
 
@@ -60,6 +83,11 @@ class ValidatorTest extends TestCase
 
     private function getFilePathFromFixtureDir(string $fixture, string $file): string
     {
-        return __DIR__.'/Fixtures/'.$fixture.'/'.$file;
+        return $this->getFixtureDir($fixture).'/'.$file;
+    }
+
+    private function getFixtureDir(string $fixture): string
+    {
+        return __DIR__.'/Fixtures/'.$fixture;
     }
 }
