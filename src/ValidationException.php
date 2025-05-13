@@ -23,6 +23,10 @@ class ValidationException extends \LogicException
         return new self('The "composer.lock" must contain both, the "packages" and the "packages-dev" keys and they must be arrays.');
     }
 
+    /**
+     * @param array<mixed> $providedPackage
+     * @param array<mixed> $validPackage
+     */
     public static function becauseOfInvalidMetadataForPackage(string $packageName, string $packageVersion, array $providedPackage, array $validPackage): self
     {
         $differ = new Differ(new UnifiedDiffOutputBuilder());

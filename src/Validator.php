@@ -149,6 +149,9 @@ final class Validator
         throw ValidationException::becauseOfInvalidMetadataForPackage($package->getName(), $package->getVersion(), $providedPackageArray, $validPackageArray ?? []);
     }
 
+    /**
+     * @return array<mixed>
+     */
     private function dumpPackage(PackageInterface $package): array
     {
         $dumper = new ArrayDumper();
