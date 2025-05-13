@@ -136,11 +136,10 @@ final class Validator
 
     private function validatePackageMetadata(PackageInterface $package, Pool $pool): void
     {
-        $dumper = new ArrayDumper();
-        $checkArray = $dumper->dump($package);
+        $checkArray = $this->dumpPackage($package);
 
         foreach ($pool->whatProvides($package->getName(), new Constraint('=', $package->getVersion())) as $validPackage) {
-            $packageArray = $dumper->dump($validPackage);
+            $packageArray = $this->dumpPackage($validPackage);
 
             if ($checkArray === $packageArray) {
                 return; // Valid!
@@ -148,6 +147,18 @@ final class Validator
         }
 
         throw ValidationException::becauseOfInvalidMetadataForPackage($package->getName(), $package->getVersion());
+    }
+
+    private function dumpPackage(PackageInterface $package): array
+    {
+        $dumper = new ArrayDumper();
+        $dump = $dumper->dump($package);
+
+        // Remove useless keys that might cause issues when validating because Composer tampers with those in the Locker.
+        // They are not relevant for integrity checks anyway (still annot fake download URLs or wrong requires etc.)
+        unset($dump['version_normalized'], $dump['time'], $dump['installation-source']);
+
+        return $dump;
     }
 
     /**
