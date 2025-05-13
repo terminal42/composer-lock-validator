@@ -136,17 +136,17 @@ final class Validator
 
     private function validatePackageMetadata(PackageInterface $package, Pool $pool): void
     {
-        $checkArray = $this->dumpPackage($package);
+        $providedPackageArray = $this->dumpPackage($package);
 
         foreach ($pool->whatProvides($package->getName(), new Constraint('=', $package->getVersion())) as $validPackage) {
-            $packageArray = $this->dumpPackage($validPackage);
+            $validPackageArray = $this->dumpPackage($validPackage);
 
-            if ($checkArray === $packageArray) {
+            if ($providedPackageArray === $validPackageArray) {
                 return; // Valid!
             }
         }
 
-        throw ValidationException::becauseOfInvalidMetadataForPackage($package->getName(), $package->getVersion());
+        throw ValidationException::becauseOfInvalidMetadataForPackage($package->getName(), $package->getVersion(), $providedPackageArray, $validPackageArray ?? []);
     }
 
     private function dumpPackage(PackageInterface $package): array

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Terminal42\ComposerLockValidator;
 
+use SebastianBergmann\Diff\Differ;
+use SebastianBergmann\Diff\Output\UnifiedDiffOutputBuilder;
+
 class ValidationException extends \LogicException
 {
     public static function becauseNoPackageRequiresPackage(string $packageName, string $packageVersion): self
@@ -20,12 +23,15 @@ class ValidationException extends \LogicException
         return new self('The "composer.lock" must contain both, the "packages" and the "packages-dev" keys and they must be arrays.');
     }
 
-    public static function becauseOfInvalidMetadataForPackage(string $packageName, string $packageVersion): self
+    public static function becauseOfInvalidMetadataForPackage(string $packageName, string $packageVersion, array $providedPackage, array $validPackage): self
     {
+        $differ = new Differ(new UnifiedDiffOutputBuilder());
+
         return new self(\sprintf(
-            'The metadata of package "%s" in version "%s" does not match any of the metadata in the repositories.',
+            'The metadata of package "%s" in version "%s" does not match any of the metadata in the repositories. Diff (provided package / valid package): %s',
             $packageName,
             $packageVersion,
+            $differ->diff(json_encode($providedPackage, JSON_PRETTY_PRINT), json_encode($validPackage, JSON_PRETTY_PRINT)),
         ));
     }
 

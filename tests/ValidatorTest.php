@@ -60,9 +60,29 @@ class ValidatorTest extends TestCase
         yield ['invalid-wrong-composer-lock-schema', 'The "composer.lock" must contain both, the "packages" and the "packages-dev" keys and they must be arrays.'];
         yield ['invalid-composer-internal-exception', 'An unknown other exception has been thrown: Invalid version string "this-is-some-fake-version".'];
         yield ['invalid-package-not-required', 'The package "vendor/package-d" in version "1.0.0.0" is not required by any package in the composer.json or its transitive dependencies.'];
-        yield ['invalid-package-manipulated-meta-data', 'The metadata of package "vendor/package-c" in version "1.0.0.0" does not match any of the metadata in the repositories.'];
+        yield ['invalid-package-manipulated-meta-data', 'The metadata of package "vendor/package-c" in version "1.0.0.0" does not match any of the metadata in the repositories. Diff (provided package / valid package): --- Original
++++ New
+@@ @@
+     "version": "1.0.0",
+     "dist": {
+         "type": "zip",
+-        "url": "https:\/\/evil.com\/vendor\/package-c\/1.0.0.zip"
++        "url": "https:\/\/domain.com\/vendor\/package-c\/1.0.0.zip"
+     },
+     "require": {
+         "vendor\/package-b": "^1.0"'];
         yield ['invalid-removed-package', 'At least one package required "vendor/package-c" in "[>= 1.0.0.0-dev < 2.0.0.0-dev]" but it is missing in the composer.lock.'];
-        yield ['invalid-removed-package-and-modified-composer-lock-requirements', 'The metadata of package "vendor/package-b" in version "1.0.0.0" does not match any of the metadata in the repositories.'];
+        yield ['invalid-removed-package-and-modified-composer-lock-requirements', 'The metadata of package "vendor/package-b" in version "1.0.0.0" does not match any of the metadata in the repositories. Diff (provided package / valid package): --- Original
++++ New
+@@ @@
+         "type": "zip",
+         "url": "https:\/\/domain.com\/vendor\/package-b\/1.0.0.zip"
+     },
++    "require": {
++        "vendor\/package-c": "^1.0"
++    },
+     "type": "library"
+ }'];
     }
 
     private function loadValidator(string $fixture): Validator
