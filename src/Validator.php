@@ -158,8 +158,13 @@ final class Validator
         $dump = $dumper->dump($package);
 
         // Remove useless keys that might cause issues when validating because Composer tampers with those in the Locker.
-        // They are not relevant for integrity checks anyway (still annot fake download URLs or wrong requires etc.)
+        // They are not relevant for integrity checks anyway (still cannot fake download URLs or wrong requires etc.)
         unset($dump['version_normalized'], $dump['time'], $dump['installation-source']);
+
+        // Remove reference and transport-options for path repositories
+        if (isset($dump['dist']['type']) && 'path' === $dump['dist']['type']) {
+            unset($dump['dist']['reference'], $dump['transport-options']);
+        }
 
         return $dump;
     }
