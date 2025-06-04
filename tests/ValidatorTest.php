@@ -53,6 +53,7 @@ class ValidatorTest extends TestCase
     {
         yield ['valid-simple'];
         yield ['valid-root-package-replaces'];
+        yield ['valid-different-branch-alias-order'];
     }
 
     public static function failsValidationProvider(): \Generator

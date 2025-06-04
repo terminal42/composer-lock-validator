@@ -166,6 +166,11 @@ final class Validator
             unset($dump['dist']['reference'], $dump['transport-options']);
         }
 
+        // Sort branch aliases
+        if (isset($dump['extra']['branch-alias'])) {
+            ksort($dump['extra']['branch-alias']);
+        }
+
         return $dump;
     }
 
