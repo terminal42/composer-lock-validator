@@ -1,0 +1,40 @@
+{
+    "content-hash": "foobar",
+    "packages": [
+        {
+            "name": "vendor/package-a",
+            "version": "1.0.0",
+            "dist": {
+                "type": "zip",
+                "url": "https://domain.com/vendor/package-a/1.0.0.zip"
+            },
+            "require": {
+                "php": "^8.1",
+                "vendor/package-b": "^1.0"
+            }
+        },
+        {
+            "name": "vendor/package-b",
+            "version": "1.0.0",
+            "dist": {
+                "type": "zip",
+                "url": "https://domain.com/vendor/package-b/1.0.0.zip"
+            },
+            "require": {
+                "vendor/package-c": "^1.0"
+            }
+        },
+        {
+            "name": "vendor/package-c",
+            "version": "1.0.0",
+            "dist": {
+                "type": "zip",
+                "url": "https://this-has-changed.com/vendor/package-c/1.0.0.zip"
+            },
+            "require": {
+                "vendor/package-b": "^1.0"
+            }
+        }
+    ],
+    "packages-dev": []
+}

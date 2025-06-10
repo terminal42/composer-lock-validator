@@ -7,6 +7,7 @@ namespace Terminal42\ComposerLockValidator\Tests;
 use Composer\Util\Platform;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Terminal42\ComposerLockValidator\PartialValidationMode;
 use Terminal42\ComposerLockValidator\ValidationException;
 use Terminal42\ComposerLockValidator\Validator;
 
@@ -31,6 +32,22 @@ class ValidatorTest extends TestCase
         }
     }
 
+    /**
+     * @param non-empty-list<string> $packageList
+     */
+    #[DataProvider('passesPartialValidationProvider')]
+    public function testPassesPartialValidation(string $fixture, array $packageList, PartialValidationMode $partialValidationMode): void
+    {
+        $validator = $this->loadValidator($fixture);
+        $validator->validatePartial(
+            $this->loadComposerLock($fixture, 'existing_composer.lock'),
+            $this->loadComposerLock($fixture),
+            $packageList,
+            $partialValidationMode,
+        );
+        $this->addToAssertionCount(1);
+    }
+
     #[DataProvider('passesValidationProvider')]
     public function testPassesValidation(string $fixture): void
     {
@@ -49,11 +66,54 @@ class ValidatorTest extends TestCase
         $validator->validate($this->loadComposerLock($fixture));
     }
 
+    /**
+     * @param non-empty-list<string> $packageList
+     */
+    #[DataProvider('failsPartialValidationProvider')]
+    public function testFailsPartialValidation(string $fixture, string $expectedExceptionMessage, array $packageList, PartialValidationMode $partialValidationMode): void
+    {
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage($expectedExceptionMessage);
+
+        $validator = $this->loadValidator($fixture);
+        $validator->validatePartial(
+            $this->loadComposerLock($fixture, 'existing_composer.lock'),
+            $this->loadComposerLock($fixture),
+            $packageList,
+            $partialValidationMode,
+        );
+    }
+
     public static function passesValidationProvider(): \Generator
     {
         yield ['valid-simple'];
         yield ['valid-root-package-replaces'];
         yield ['valid-different-branch-alias-order'];
+    }
+
+    public static function passesPartialValidationProvider(): \Generator
+    {
+        yield ['valid-partial-update-listed-only', ['vendor/package-a', 'vendor/package-b'], PartialValidationMode::UpdateOnlyListed];
+    }
+
+    public static function failsPartialValidationProvider(): \Generator
+    {
+        yield [
+            'invalid-partial-update-listed-only-modified-existing-package',
+            'The metadata of package "vendor/package-c" in version "1.0.0.0" does not match the package metadata in your local composer.lock. Diff (provided package / valid package): --- Original
++++ New
+@@ @@
+     "version": "1.0.0",
+     "dist": {
+         "type": "zip",
+-        "url": "https:\/\/i-am-not-in-the-update-list-so-I-want-to-be-used-for-an-injection.com\/vendor\/package-c\/1.0.0.zip"
++        "url": "https:\/\/this-has-changed.com\/vendor\/package-c\/1.0.0.zip"
+     },
+     "require": {
+         "vendor\/package-b": "^1.0"',
+            ['vendor/package-a', 'vendor/package-b'],
+            PartialValidationMode::UpdateOnlyListed,
+        ];
     }
 
     public static function failsValidationProvider(): \Generator
@@ -97,9 +157,9 @@ class ValidatorTest extends TestCase
     /**
      * @return array<mixed>
      */
-    private function loadComposerLock(string $fixture): array
+    private function loadComposerLock(string $fixture, string $name = 'composer.lock'): array
     {
-        return json_decode(file_get_contents($this->getFilePathFromFixtureDir($fixture, 'composer.lock')), true);
+        return json_decode(file_get_contents($this->getFilePathFromFixtureDir($fixture, $name)), true);
     }
 
     private function getFilePathFromFixtureDir(string $fixture, string $file): string
