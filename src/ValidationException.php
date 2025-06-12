@@ -27,30 +27,15 @@ class ValidationException extends \LogicException
      * @param array<mixed> $providedPackage
      * @param array<mixed> $validPackage
      */
-    public static function becauseOfInvalidMetadataForPackageInRepositories(string $packageName, string $packageVersion, array $providedPackage, array $validPackage): self
+    public static function becauseOfInvalidMetadataForPackage(string $packageName, string $packageVersion, array $providedPackage, array $validPackage, bool $addHintAboutLocalComposerLock = false): self
     {
         $differ = new Differ(new UnifiedDiffOutputBuilder());
 
         return new self(\sprintf(
-            'The metadata of package "%s" in version "%s" does not match any of the metadata in the repositories. Diff (provided package / valid package): %s',
+            'The metadata of package "%s" in version "%s" does not match any of the metadata in the repositories%s. Diff (provided package / valid package): %s',
             $packageName,
             $packageVersion,
-            $differ->diff(json_encode($providedPackage, JSON_PRETTY_PRINT), json_encode($validPackage, JSON_PRETTY_PRINT)),
-        ));
-    }
-
-    /**
-     * @param array<mixed> $providedPackage
-     * @param array<mixed> $validPackage
-     */
-    public static function becauseOfInvalidMetadataForPackageInLocalComposerLock(string $packageName, string $packageVersion, array $providedPackage, array $validPackage): self
-    {
-        $differ = new Differ(new UnifiedDiffOutputBuilder());
-
-        return new self(\sprintf(
-            'The metadata of package "%s" in version "%s" does not match the package metadata in your local composer.lock. Diff (provided package / valid package): %s',
-            $packageName,
-            $packageVersion,
+            $addHintAboutLocalComposerLock ? ' or your provided local composer.lock' : '',
             $differ->diff(json_encode($providedPackage, JSON_PRETTY_PRINT), json_encode($validPackage, JSON_PRETTY_PRINT)),
         ));
     }

@@ -46,7 +46,7 @@
                 "version": "1.0.0",
                 "dist": {
                     "type": "zip",
-                    "url": "https://this-has-been-abandoned-now-but-it-does-not-matter-because-it-is-a-partial-update.com/vendor/package-c/1.0.0.zip"
+                    "url": "https://this-has-been-abandoned-now-but-validation-should-only-fail-on-partial-update.com/vendor/package-c/1.0.0.zip"
                 },
                 "require": {
                     "vendor/package-b": "^1.0"
