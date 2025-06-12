@@ -56,13 +56,4 @@ class ValidationException extends \LogicException
             $exception->getMessage(),
         ), 0, $exception);
     }
-
-    public static function becauseOfAPackageThatShouldExistInComposerLockButDoesApparentlyNot(string $packageName, string $prettyConstraint): self
-    {
-        return new self(\sprintf(
-            'The package "%s" in version "%s" was not marked for update so it was compared to your local composer.lock but there it did not exist.',
-            $packageName,
-            $prettyConstraint,
-        ));
-    }
 }
