@@ -22,7 +22,6 @@ use Composer\Repository\PlatformRepository;
 use Composer\Repository\RepositorySet;
 use Composer\Repository\RootPackageRepository;
 use Composer\Semver\Constraint\Constraint;
-use Composer\Semver\Constraint\ConstraintInterface;
 use Composer\Semver\Constraint\MultiConstraint;
 use Composer\Semver\Intervals;
 
@@ -30,22 +29,6 @@ final class Validator
 {
     private function __construct(private readonly Composer $composer)
     {
-    }
-
-    /**
-     * @param array<mixed> $composerLock
-     *
-     * @throws ValidationException
-     */
-    public function validate(array $composerLock): void
-    {
-        try {
-            $this->doValidate($composerLock);
-        } catch (ValidationException $exception) {
-            throw $exception;
-        } catch (\Throwable $exception) {
-            throw ValidationException::becauseOfOtherException($exception);
-        }
     }
 
     public static function createFromComposerJson(string $pathToComposerJson, IOInterface|null $io = null): self
@@ -59,14 +42,41 @@ final class Validator
     }
 
     /**
-     * @param array<mixed> $composerLock
+     * @param array<mixed>      $composerLock
+     * @param array<mixed>|null $existingComposerLock
      *
      * @throws ValidationException
-     * @throws \Throwable
      */
-    private function doValidate(array $composerLock): void
+    public function validate(array $composerLock, array|null $existingComposerLock = null): void
     {
-        // 1st step, validate basic composer.lock requirements
+        try {
+            // 1st step, validate basic composer.lock requirements
+            $composerLockRepository = $this->buildComposerLockRepository($composerLock);
+
+            // Use the pool because this handles all the replaces and provides as well
+            $pool = $this->createPool($composerLockRepository, $existingComposerLock ? $this->buildComposerLockRepository($existingComposerLock) : null);
+
+            // 2nd step: validate if there is a package present, that is not required by the root composer.json
+            // 3rd step: validate if no package has been removed from the composer.lock
+            $this->validateNoAddedAndRemovedPackages($composerLockRepository, $pool);
+
+            // 4th step: validate the metadata of all provided packages in the composer.lock.
+            // In case of the full update, all the packages have to be compared against the repository data
+            foreach ($composerLockRepository->getPackages() as $package) {
+                $this->validatePackageMetadataAgainstRepositories($package, $pool, null !== $existingComposerLock);
+            }
+        } catch (ValidationException $exception) {
+            throw $exception;
+        } catch (\Throwable $exception) {
+            throw ValidationException::becauseOfOtherException($exception);
+        }
+    }
+
+    /**
+     * @param array<mixed> $composerLock
+     */
+    private function buildComposerLockRepository(array $composerLock): LockArrayRepository
+    {
         if (
             !isset($composerLock['packages'], $composerLock['packages-dev'])
             || !\is_array($composerLock['packages']) || !\is_array($composerLock['packages-dev'])
@@ -74,22 +84,23 @@ final class Validator
             throw ValidationException::becausePackagesKeyMissingOrIncorrectInComposerLock();
         }
 
-        /** @var RootPackageInterface&BasePackage $rootPackage */
-        $rootPackage = clone $this->composer->getPackage();
         $composerLockRepo = new LockArrayRepository();
         $loader = new ArrayLoader();
-        $packagesToLoad = [];
 
         foreach (array_merge($composerLock['packages'], $composerLock['packages-dev']) as $packageData) {
             $package = $loader->load($packageData);
             $composerLockRepo->addPackage($package);
-            $packagesToLoad[$package->getName()] = new Constraint('=', $package->getVersion());
         }
 
+        return $composerLockRepo;
+    }
+
+    private function validateNoAddedAndRemovedPackages(LockArrayRepository $composerLockRepo, Pool $pool): void
+    {
         // Create an installed repo with our local root package repo and the provided composer.lock repo to check
         // for valid dependents.
         $installedRepo = new InstalledRepository([
-            new RootPackageRepository($rootPackage),
+            new RootPackageRepository($this->getRootPackage()),
             $composerLockRepo,
         ]);
 
@@ -117,24 +128,20 @@ final class Validator
             }
         }
 
-        // Use the pool because this handles all the replaces and provides as well
-        $pool = $this->createPool($rootPackage, $composerLockRepo, $packagesToLoad);
-
-        // 3rd step: validate if no package has been removed from the composer.lock
+        // 3rd step: validate that no package has been removed from the composer.lock
         foreach ($allRequirements as $packageName => $constraint) {
             $constraint = Intervals::compactConstraint($constraint);
             if ([] === $pool->whatProvides($packageName, $constraint)) {
                 throw ValidationException::becauseOfRemovedPackage($packageName, $constraint->getPrettyString());
             }
         }
-
-        // 4th step: validate if all the provided packages in the composer.lock actually exist in the repositories
-        foreach ($composerLockRepo->getPackages() as $package) {
-            $this->validatePackageMetadata($package, $pool);
-        }
     }
 
-    private function validatePackageMetadata(PackageInterface $package, Pool $pool): void
+    /**
+     * @throws ValidationException
+     * @throws \Throwable
+     */
+    private function validatePackageMetadataAgainstRepositories(PackageInterface $package, Pool $pool, bool $addHintAboutLocalComposerLockOnFailure): void
     {
         $providedPackageArray = $this->dumpPackage($package);
 
@@ -146,7 +153,7 @@ final class Validator
             }
         }
 
-        throw ValidationException::becauseOfInvalidMetadataForPackage($package->getName(), $package->getVersion(), $providedPackageArray, $validPackageArray ?? []);
+        throw ValidationException::becauseOfInvalidMetadataForPackage($package->getName(), $package->getVersion(), $providedPackageArray, $validPackageArray ?? [], $addHintAboutLocalComposerLockOnFailure);
     }
 
     /**
@@ -174,18 +181,23 @@ final class Validator
         return $dump;
     }
 
-    /**
-     * @param RootPackageInterface&BasePackage   $rootPackage
-     * @param array<string, ConstraintInterface> $packagesToLoad
-     */
-    private function createPool(RootPackageInterface $rootPackage, LockArrayRepository $composerLockRepo, array $packagesToLoad): Pool
+    private function createPool(LockArrayRepository $composerLockRepo, LockArrayRepository|null $existingComposerLockRepo = null): Pool
     {
+        $rootPackage = $this->getRootPackage();
+
         $repoSet = new RepositorySet(
             $rootPackage->getMinimumStability(),
             $rootPackage->getStabilityFlags(),
             $rootPackage->getAliases(),
             $rootPackage->getReferences(),
         );
+
+        // Add the existing composer lock repo as repository for valid packages too, in case that was passed
+        if ($existingComposerLockRepo) {
+            $repoSet->addRepository($existingComposerLockRepo);
+        }
+
+        $repoSet->addRepository(new RootPackageRepository($rootPackage));
 
         foreach ($this->composer->getRepositoryManager()->getRepositories() as $repo) {
             $repoSet->addRepository($repo);
@@ -200,8 +212,10 @@ final class Validator
 
         $allowedPackages = [];
 
-        foreach ($packagesToLoad as $packageName => $constraint) {
-            $request->requireName($packageName, $constraint);
+        foreach ($composerLockRepo->getPackages() as $package) {
+            $packageName = $package->getName();
+
+            $request->requireName($packageName, new Constraint('=', $package->getVersion()));
             $allowedPackages[] = strtolower($packageName);
         }
 
@@ -210,5 +224,13 @@ final class Validator
         }
 
         return $repoSet->createPool($request, new NullIO());
+    }
+
+    private function getRootPackage(): RootPackageInterface&BasePackage
+    {
+        // Always clone the root package because some Composer actions set information on the packages causing problems
+        // later on
+        /** @var RootPackageInterface&BasePackage */
+        return clone $this->composer->getPackage();
     }
 }

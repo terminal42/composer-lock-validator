@@ -32,21 +32,21 @@ class ValidatorTest extends TestCase
     }
 
     #[DataProvider('passesValidationProvider')]
-    public function testPassesValidation(string $fixture): void
+    public function testPassesValidation(string $fixture, bool $passExistingComposerLock = false): void
     {
         $validator = $this->loadValidator($fixture);
-        $validator->validate($this->loadComposerLock($fixture));
+        $validator->validate($this->loadComposerLock($fixture), $passExistingComposerLock ? $this->loadComposerLock($fixture, 'existing_composer.lock') : null);
         $this->addToAssertionCount(1);
     }
 
     #[DataProvider('failsValidationProvider')]
-    public function testFailsValidation(string $fixture, string $expectedExceptionMessage): void
+    public function testFailsValidation(string $fixture, string $expectedExceptionMessage, bool $passExistingComposerLock = false): void
     {
         $this->expectException(ValidationException::class);
         $this->expectExceptionMessage($expectedExceptionMessage);
 
         $validator = $this->loadValidator($fixture);
-        $validator->validate($this->loadComposerLock($fixture));
+        $validator->validate($this->loadComposerLock($fixture), $passExistingComposerLock ? $this->loadComposerLock($fixture, 'existing_composer.lock') : null);
     }
 
     public static function passesValidationProvider(): \Generator
@@ -54,6 +54,7 @@ class ValidatorTest extends TestCase
         yield ['valid-simple'];
         yield ['valid-root-package-replaces'];
         yield ['valid-different-branch-alias-order'];
+        yield ['partial-update', true];
     }
 
     public static function failsValidationProvider(): \Generator
@@ -84,6 +85,22 @@ class ValidatorTest extends TestCase
 +    },
      "type": "library"
  }'];
+        yield ['partial-update', 'The metadata of package "vendor/package-c" in version "1.0.0.0" does not match any of the metadata in the repositories. Diff (provided package / valid package): --- Original
++++ New
+@@ @@
+     "version": "1.0.0",
+     "dist": {
+         "type": "zip",
+-        "url": "https:\/\/domain.com\/vendor\/package-c\/1.0.0.zip"
++        "url": "https:\/\/this-has-been-abandoned-now-but-validation-should-only-fail-on-partial-update.com\/vendor\/package-c\/1.0.0.zip"
+     },
+     "require": {
+         "vendor\/package-b": "^1.0"
+     },
+-    "type": "library"
++    "type": "library",
++    "abandoned": true
+ }', false];
     }
 
     private function loadValidator(string $fixture): Validator
@@ -97,9 +114,9 @@ class ValidatorTest extends TestCase
     /**
      * @return array<mixed>
      */
-    private function loadComposerLock(string $fixture): array
+    private function loadComposerLock(string $fixture, string $name = 'composer.lock'): array
     {
-        return json_decode(file_get_contents($this->getFilePathFromFixtureDir($fixture, 'composer.lock')), true);
+        return json_decode(file_get_contents($this->getFilePathFromFixtureDir($fixture, $name)), true);
     }
 
     private function getFilePathFromFixtureDir(string $fixture, string $file): string
