@@ -226,13 +226,11 @@ final class Validator
         return $repoSet->createPool($request, new NullIO());
     }
 
-    /**
-     * @return RootPackageInterface&BasePackage
-     */
-    private function getRootPackage(): RootPackageInterface
+    private function getRootPackage(): RootPackageInterface&BasePackage
     {
         // Always clone the root package because some Composer actions set information on the packages causing problems
         // later on
+        /** @var RootPackageInterface&BasePackage */
         return clone $this->composer->getPackage();
     }
 }
