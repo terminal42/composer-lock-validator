@@ -212,7 +212,7 @@ final class Validator
 
         $allowedPackages = [];
 
-        foreach ($composerLockRepo->getPackages() as $package) {
+        foreach ($composerLockRepo->getCanonicalPackages() as $package) {
             $packageName = $package->getName();
 
             $request->requireName($packageName, new Constraint('=', $package->getVersion()));
