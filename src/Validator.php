@@ -76,7 +76,7 @@ final class Validator
     /**
      * @param array<mixed> $composerLock
      */
-    private function buildComposerLockRepository(array $composerLock, bool $canonical = true): LockArrayRepository
+    private function buildComposerLockRepository(array $composerLock, bool $canonical = true): LockArrayRepository|FilterRepository
     {
         if (
             !isset($composerLock['packages'], $composerLock['packages-dev'])
