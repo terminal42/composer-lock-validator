@@ -16,6 +16,7 @@ use Composer\Package\Loader\ArrayLoader;
 use Composer\Package\PackageInterface;
 use Composer\Package\RootAliasPackage;
 use Composer\Package\RootPackageInterface;
+use Composer\Repository\FilterRepository;
 use Composer\Repository\InstalledRepository;
 use Composer\Repository\LockArrayRepository;
 use Composer\Repository\PlatformRepository;
@@ -192,12 +193,14 @@ final class Validator
             $rootPackage->getReferences(),
         );
 
-        // Add the existing composer lock repo as repository for valid packages too, in case that was passed
-        if ($existingComposerLockRepo) {
-            $repoSet->addRepository($existingComposerLockRepo);
-        }
-
         $repoSet->addRepository(new RootPackageRepository($rootPackage));
+
+        // Add the existing composer lock repo as repository for valid packages too, in case that was passed
+        // It must be the first one so it's checked first (= shortcut if it exists) but it must be set to canonical -> false
+        // so that other repositories are still checked
+        if ($existingComposerLockRepo) {
+            $repoSet->addRepository(new FilterRepository($existingComposerLockRepo, ['canonical' => false]));
+        }
 
         foreach ($this->composer->getRepositoryManager()->getRepositories() as $repo) {
             $repoSet->addRepository($repo);

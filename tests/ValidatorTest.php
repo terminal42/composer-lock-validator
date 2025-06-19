@@ -55,6 +55,7 @@ class ValidatorTest extends TestCase
         yield ['valid-root-package-replaces'];
         yield ['valid-different-branch-alias-order'];
         yield ['partial-update', true];
+        yield ['partial-update-local-composer-lock-outdated', true];
     }
 
     public static function failsValidationProvider(): \Generator
