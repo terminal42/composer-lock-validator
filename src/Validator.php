@@ -54,7 +54,7 @@ final class Validator
             $composerLockRepository = $this->buildComposerLockRepository($composerLock);
 
             // Use the pool because this handles all the replaces and provides as well
-            $pool = $this->createPool($composerLockRepository);
+            $pool = $this->createPool($composerLockRepository, $existingComposerLock ? $this->buildComposerLockRepository($existingComposerLock) : null);
 
             // 2nd step: validate if there is a package present, that is not required by the root composer.json
             // 3rd step: validate if no package has been removed from the composer.lock
@@ -63,7 +63,7 @@ final class Validator
             // 4th step: validate the metadata of all provided packages in the composer.lock.
             // In case of the full update, all the packages have to be compared against the repository data
             foreach ($composerLockRepository->getPackages() as $package) {
-                $this->validatePackageMetadataAgainstRepositories($package, $pool, $existingComposerLock ? $this->buildComposerLockRepository($existingComposerLock) : null);
+                $this->validatePackageMetadataAgainstRepositories($package, $pool, null !== $existingComposerLock);
             }
         } catch (ValidationException $exception) {
             throw $exception;
@@ -141,7 +141,7 @@ final class Validator
      * @throws ValidationException
      * @throws \Throwable
      */
-    private function validatePackageMetadataAgainstRepositories(PackageInterface $package, Pool $pool, LockArrayRepository|null $existingLockRepository = null): void
+    private function validatePackageMetadataAgainstRepositories(PackageInterface $package, Pool $pool, bool $addHintAboutLocalComposerLockOnFailure): void
     {
         $providedPackageArray = $this->dumpPackage($package);
 
@@ -153,15 +153,7 @@ final class Validator
             }
         }
 
-        if ($package = $existingLockRepository?->findPackage($package->getName(), new Constraint('=', $package->getVersion()))) {
-            $validPackageArray = $this->dumpPackage($validPackage);
-
-            if ($providedPackageArray === $validPackageArray) {
-                return; // Valid!
-            }
-        }
-
-        throw ValidationException::becauseOfInvalidMetadataForPackage($package->getName(), $package->getVersion(), $providedPackageArray, $validPackageArray ?? [], null !== $existingLockRepository);
+        throw ValidationException::becauseOfInvalidMetadataForPackage($package->getName(), $package->getVersion(), $providedPackageArray, $validPackageArray ?? [], $addHintAboutLocalComposerLockOnFailure);
     }
 
     /**
@@ -189,7 +181,7 @@ final class Validator
         return $dump;
     }
 
-    private function createPool(LockArrayRepository $composerLockRepo): Pool
+    private function createPool(LockArrayRepository $composerLockRepo, LockArrayRepository|null $existingComposerLockRepo = null): Pool
     {
         $rootPackage = $this->getRootPackage();
 
@@ -199,6 +191,11 @@ final class Validator
             $rootPackage->getAliases(),
             $rootPackage->getReferences(),
         );
+
+        // Add the existing composer lock repo as repository for valid packages too, in case that was passed
+        if ($existingComposerLockRepo) {
+            $repoSet->addRepository($existingComposerLockRepo);
+        }
 
         $repoSet->addRepository(new RootPackageRepository($rootPackage));
 
