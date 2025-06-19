@@ -153,7 +153,7 @@ final class Validator
             }
         }
 
-        if ($validPackage = $existingLockRepository?->findPackage($package->getName(), new Constraint('=', $package->getVersion()))) {
+        if ($package = $existingLockRepository?->findPackage($package->getName(), new Constraint('=', $package->getVersion()))) {
             $validPackageArray = $this->dumpPackage($validPackage);
 
             if ($providedPackageArray === $validPackageArray) {
