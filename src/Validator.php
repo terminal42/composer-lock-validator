@@ -16,6 +16,7 @@ use Composer\Package\Loader\ArrayLoader;
 use Composer\Package\PackageInterface;
 use Composer\Package\RootAliasPackage;
 use Composer\Package\RootPackageInterface;
+use Composer\Repository\FilterRepository;
 use Composer\Repository\InstalledRepository;
 use Composer\Repository\LockArrayRepository;
 use Composer\Repository\PlatformRepository;
@@ -54,7 +55,7 @@ final class Validator
             $composerLockRepository = $this->buildComposerLockRepository($composerLock);
 
             // Use the pool because this handles all the replaces and provides as well
-            $pool = $this->createPool($composerLockRepository, $existingComposerLock ? $this->buildComposerLockRepository($existingComposerLock) : null);
+            $pool = $this->createPool($composerLockRepository, $existingComposerLock ? $this->buildComposerLockRepository($existingComposerLock, false) : null);
 
             // 2nd step: validate if there is a package present, that is not required by the root composer.json
             // 3rd step: validate if no package has been removed from the composer.lock
@@ -75,7 +76,7 @@ final class Validator
     /**
      * @param array<mixed> $composerLock
      */
-    private function buildComposerLockRepository(array $composerLock): LockArrayRepository
+    private function buildComposerLockRepository(array $composerLock, bool $canonical = true): LockArrayRepository
     {
         if (
             !isset($composerLock['packages'], $composerLock['packages-dev'])
@@ -90,6 +91,10 @@ final class Validator
         foreach (array_merge($composerLock['packages'], $composerLock['packages-dev']) as $packageData) {
             $package = $loader->load($packageData);
             $composerLockRepo->addPackage($package);
+        }
+
+        if (false === $canonical) {
+            $composerLockRepo = new FilterRepository($composerLockRepo, ['canonical' => false]);
         }
 
         return $composerLockRepo;
